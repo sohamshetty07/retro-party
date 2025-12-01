@@ -616,8 +616,19 @@ const RetroCamera = ({ eventId = null }) => {
                 </div>
                 <div className="flex gap-2">
                     {mode === 'photo' && (
-                        <button onClick={() => setTimerDuration(p => p===0?3:p===3?10:0)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${timerDuration>0?'bg-yellow-500/20 text-yellow-500':'text-neutral-500 hover:text-white'}`}><Timer size={14} />{timerDuration>0 && `${timerDuration}s`}</button>
+                        <>
+                            {/* TIMER BUTTON */}
+                            <button onClick={() => setTimerDuration(p => p===0?3:p===3?10:0)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${timerDuration>0?'bg-yellow-500/20 text-yellow-500':'text-neutral-500 hover:text-white'}`}>
+                                <Timer size={14} />{timerDuration>0 && `${timerDuration}s`}
+                            </button>
+                            
+                            {/* BOOTH BUTTON (The new part!) */}
+                            <button onClick={() => setIsBoothMode(!isBoothMode)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isBoothMode?'bg-purple-500/20 text-purple-400':'text-neutral-500 hover:text-white'}`}>
+                                <Images size={14} />
+                            </button>
+                        </>
                     )}
+                    {/* ROTATE BUTTON */}
                     <button onClick={() => setFacingMode(p => p==='user'?'environment':'user')} className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-white/10"><RotateCcw size={14} /></button>
                 </div>
             </div>
