@@ -551,7 +551,7 @@ const RetroCamera = ({ eventId = null }) => {
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes develop { 0% { filter: brightness(0) blur(5px) grayscale(1); opacity: 0.1; } 40% { filter: brightness(0.4) blur(2px) grayscale(0.5); opacity: 0.6; } 100% { filter: brightness(1) blur(0) grayscale(0); opacity: 1; } }
         .developing-image { animation: develop ${Math.max(0.5, 4 - (shakeIntensity * 3))}s ease-in-out forwards; }
-        @keyframes bounce-in { 0% { transform: translate(-50%, 100%); } 100% { transform: translate(-50%, 0); } }
+        @keyframes bounce-in { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
         .animate-bounce-in { animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         /* Safe area for iPhone home bar */
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
@@ -749,7 +749,7 @@ const RetroCamera = ({ eventId = null }) => {
 
       {/* --- FLOATING BATCH ACTION BAR --- */}
       {selectedPhotos.size > 0 && (
-          <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] flex items-center gap-4 animate-bounce-in border border-white/20 w-[90%] max-w-sm justify-between">
+          <div className="fixed bottom-24 md:bottom-6 left-0 right-0 mx-auto bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] flex items-center gap-3 animate-bounce-in border border-white/20 w-[90%] max-w-sm justify-between">
               <span className="font-bold text-sm whitespace-nowrap">{selectedPhotos.size} <span className="hidden sm:inline">Selected</span></span>
               
               <div className="flex items-center gap-3">
