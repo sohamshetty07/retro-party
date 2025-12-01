@@ -159,6 +159,7 @@ const RetroCamera = ({ eventId = null }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   
   // Features
+  const [activeTab, setActiveTab] = useState('camera'); // 'camera' or 'gallery'
   const [driveLink, setDriveLink] = useState(null);
   const [eventName, setEventName] = useState("");
   const [mode, setMode] = useState('photo'); 
@@ -544,184 +545,164 @@ const RetroCamera = ({ eventId = null }) => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 flex flex-col items-center py-8 px-4 font-mono select-none overflow-y-auto pb-32">
+    <div className="min-h-[100dvh] bg-neutral-900 flex flex-col items-center py-4 px-2 font-mono select-none overflow-x-hidden">
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes develop { 0% { filter: brightness(0) blur(5px) grayscale(1); opacity: 0.1; } 40% { filter: brightness(0.4) blur(2px) grayscale(0.5); opacity: 0.6; } 100% { filter: brightness(1) blur(0) grayscale(0); opacity: 1; } }
         .developing-image { animation: develop ${Math.max(0.5, 4 - (shakeIntensity * 3))}s ease-in-out forwards; }
-        @keyframes focusPing { 0% { transform: scale(1.5); opacity: 0; border-color: white; } 50% { opacity: 1; border-color: #4ade80; } 100% { transform: scale(1); opacity: 0; } }
-        .animate-focus { animation: focusPing 0.6s ease-out forwards; }
-        @keyframes pulse-rec { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        .animate-pulse-rec { animation: pulse-rec 1s infinite; }
         @keyframes bounce-in { 0% { transform: translate(-50%, 100%); } 100% { transform: translate(-50%, 0); } }
         .animate-bounce-in { animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        /* Safe area for iPhone home bar */
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
       `}</style>
 
       {/* --- HEADER --- */}
-      <div className="w-full max-w-6xl flex justify-between items-center mb-8 px-4">
-         <h1 className="text-2xl font-black text-white tracking-tighter italic">RETRO<span className="text-red-500">CAM</span></h1>
-         <div className="flex gap-4 text-xs font-bold text-neutral-500">
-             {eventId && <span className="bg-red-500 text-white px-2 py-1 rounded animate-pulse">LIVE EVENT</span>}
-             <button onClick={toggleFullscreen} className="hover:text-white transition-colors flex items-center gap-1">{isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />} <span className="hidden md:inline">{isFullscreen ? 'EXIT' : 'FULLSCREEN'}</span></button>
-             <span className="hidden md:flex items-center gap-1"><Smartphone size={14}/> SHAKE TO DEVELOP</span>
+      <div className="w-full max-w-6xl flex justify-between items-center mb-4 px-2 z-20">
+         <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter italic">RETRO<span className="text-red-500">CAM</span></h1>
+         <div className="flex gap-2 text-[10px] md:text-xs font-bold text-neutral-500">
+             {eventId && <span className="bg-red-600 text-white px-2 py-1 rounded animate-pulse shadow-red-900/50 shadow-lg">LIVE EVENT</span>}
+             <button onClick={toggleFullscreen} className="hover:text-white transition-colors flex items-center gap-1 hidden md:flex"><Maximize2 size={14} /> FULLSCREEN</button>
          </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row items-center xl:items-start justify-center gap-12 w-full max-w-7xl">
-        {/* --- CAMERA BODY --- */}
-        <div className="relative w-full max-w-[550px] bg-[#1e1e1e] rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t border-white/10 p-8 flex flex-col gap-6 z-10 shrink-0">
-          <div className="absolute inset-0 rounded-[3rem] pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+      {/* --- MAIN CONTENT AREA --- */}
+      <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 w-full max-w-7xl pb-24 md:pb-0">
+        
+        {/* --- CAMERA BODY (Hidden on mobile if tab is 'gallery') --- */}
+        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full max-w-[500px] bg-[#1e1e1e] rounded-[2rem] md:rounded-[3rem] shadow-2xl border-t border-white/10 p-4 md:p-8 flex-col gap-4 md:gap-6 z-10 shrink-0`}>
+          <div className="absolute inset-0 rounded-[2rem] pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
           
+          {/* Top Info Bar */}
           <div className="flex justify-between items-center text-neutral-400 px-2">
-            <div className="flex items-center gap-2 text-neutral-300"><Camera size={22} /><span className="text-sm tracking-[0.2em] font-black">POLAROID-3000</span></div>
-            <div className="flex items-center gap-4"><div className={`flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/5`}><div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse-rec' : 'bg-neutral-600'}`}></div><span className="text-[10px] font-bold text-neutral-400">{isRecording ? 'REC' : 'STANDBY'}</span></div><Battery size={22} className="text-green-500" /></div>
+            <div className="flex items-center gap-2 text-neutral-300"><Camera size={18} /><span className="text-xs tracking-[0.2em] font-black">POLAROID-3000</span></div>
+            <div className="flex items-center gap-3"><div className={`flex items-center gap-2 px-2 py-1 rounded-full bg-black/40 border border-white/5`}><div className={`w-1.5 h-1.5 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-neutral-600'}`}></div><span className="text-[9px] font-bold text-neutral-400">{isRecording ? 'REC' : 'ON'}</span></div><Battery size={18} className="text-green-500" /></div>
           </div>
 
-          <div className="relative w-full aspect-[4/3] bg-black rounded-2xl overflow-hidden border-[8px] border-[#151515] shadow-[inset_0_0_30px_rgba(0,0,0,1)] group cursor-crosshair active:scale-[0.99] transition-transform" onClick={handleFocus}>
-            {error ? <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-3"><AlertCircle size={40} className="text-red-500" /><p>{error}</p></div> : 
+          {/* Viewfinder */}
+          <div className="relative w-full aspect-[4/3] bg-black rounded-xl overflow-hidden border-4 md:border-[8px] border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform" onClick={handleFocus}>
+            {error ? <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-3 text-center p-4"><AlertCircle size={32} className="text-red-500" /><p className="text-xs">{error}</p></div> : 
               <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
-                 <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover transition-transform duration-500 ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`} 
+                 <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`} 
                  style={{ filter: getFilterString(FILTER_TYPES[filterMode]) }} />
-                 {FILTER_TYPES[filterMode]?.glitch && (
-                    <div className="absolute inset-0 opacity-50 pointer-events-none mix-blend-screen" style={{ backgroundColor: 'rgba(255,0,255,0.1)', transform: 'translate(-2px, 0)' }}></div>
-                 )}
+                 {FILTER_TYPES[filterMode]?.glitch && <div className="absolute inset-0 opacity-50 pointer-events-none mix-blend-screen bg-fuchsia-500/10 translate-x-[-2px]"></div>}
                  {FILTER_TYPES[filterMode]?.invert && <div className="absolute inset-0 bg-white mix-blend-difference pointer-events-none"></div>}
               </div>
             }
+            
             <div className="absolute inset-0 pointer-events-none transition-colors duration-300" style={{ backgroundColor: FILTER_TYPES[filterMode]?.overlayColor || 'transparent', mixBlendMode: FILTER_TYPES[filterMode]?.overlayBlend || 'normal' }} />
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.6)_100%)] pointer-events-none z-10"></div>
             <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.2)_50%)] bg-[length:100%_4px] pointer-events-none z-10 opacity-100"></div>
 
-            {focusPoint && <div className="absolute w-16 h-16 border-2 border-white rounded pointer-events-none z-50 animate-focus shadow-[0_0_10px_rgba(0,255,0,0.5)]" style={{ left: focusPoint.x - 32, top: focusPoint.y - 32 }}><div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-1 h-2 bg-white/80"></div><div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-1 w-1 h-2 bg-white/80"></div><div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-1 w-2 h-1 bg-white/80"></div><div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-1 w-2 h-1 bg-white/80"></div></div>}
-            {countdown !== null && <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm"><span className="text-9xl font-black text-white animate-bounce">{countdown}</span></div>}
-            <div className={`absolute inset-0 bg-white z-[60] transition-opacity duration-100 ${isFlashing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} />
+            {focusPoint && <div className="absolute w-12 h-12 border border-white rounded pointer-events-none z-50 animate-focus shadow-[0_0_10px_rgba(0,255,0,0.5)]" style={{ left: focusPoint.x - 24, top: focusPoint.y - 24 }} />}
+            {countdown !== null && <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm"><span className="text-8xl font-black text-white animate-bounce">{countdown}</span></div>}
+            <div className={`absolute inset-0 bg-white z-[60] transition-opacity duration-75 ${isFlashing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} />
             
-            <div className="absolute inset-0 p-6 z-20 flex flex-col justify-between opacity-70 pointer-events-none">
-              <div className="flex justify-between text-xs font-bold text-white/80 font-mono">
+            <div className="absolute inset-0 p-4 z-20 flex flex-col justify-between opacity-70 pointer-events-none">
+              <div className="flex justify-between text-[10px] font-bold text-white/80 font-mono">
                   <span>{isRecording ? formatTime(recordingTime) : `${timerDuration}s TIMER`}</span>
                   <span>{mode === 'video' ? 'VIDEO' : (isBoothMode ? 'BOOTH' : 'SINGLE')}</span>
               </div>
-              <div className="flex justify-between items-end text-xs font-bold text-white/80 uppercase"><span className="bg-black/40 px-2 py-1 rounded backdrop-blur-md">{FILTER_TYPES[filterMode]?.name}</span><span className="text-xl text-yellow-500 font-digital tracking-widest">{shutterCount.toString().padStart(3, '0')}</span></div>
+              <div className="flex justify-between items-end text-[10px] font-bold text-white/80 uppercase"><span className="bg-black/40 px-2 py-1 rounded backdrop-blur-md">{FILTER_TYPES[filterMode]?.name}</span><span className="text-lg text-yellow-500 font-digital tracking-widest">{shutterCount.toString().padStart(3, '0')}</span></div>
             </div>
           </div>
 
-          <div className="bg-[#1a1a1a] rounded-3xl p-5 shadow-inner border-b border-white/5 flex flex-col gap-5">
-            <div className="flex justify-between items-center px-2 pb-2 border-b border-white/5">
-                <div className="flex gap-2">
-                    <button onClick={() => setMode('photo')} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${mode==='photo'?'bg-white/20 text-white':'text-neutral-500 hover:text-white'}`}><Camera size={16} /> PHOTO</button>
-                    <button onClick={() => setMode('video')} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${mode==='video'?'bg-white/20 text-white':'text-neutral-500 hover:text-white'}`}><Video size={16} /> VIDEO</button>
+          {/* Controls Area */}
+          <div className="bg-[#1a1a1a] rounded-2xl p-4 shadow-inner border-b border-white/5 flex flex-col gap-4">
+            <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                <div className="flex gap-1 bg-black/20 p-1 rounded-lg">
+                    <button onClick={() => setMode('photo')} className={`p-2 rounded-md transition-all ${mode==='photo'?'bg-white/20 text-white shadow-sm':'text-neutral-500'}`}><Camera size={14} /></button>
+                    <button onClick={() => setMode('video')} className={`p-2 rounded-md transition-all ${mode==='video'?'bg-white/20 text-white shadow-sm':'text-neutral-500'}`}><Video size={14} /></button>
                 </div>
                 <div className="flex gap-2">
                     {mode === 'photo' && (
-                        <>
-                            <button onClick={() => setTimerDuration(p => p===0?3:p===3?10:0)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${timerDuration>0?'bg-yellow-500/20 text-yellow-500':'text-neutral-500 hover:text-white'}`}><Timer size={16} />{timerDuration===0?'OFF':`${timerDuration}s`}</button>
-                            <button onClick={() => setIsBoothMode(!isBoothMode)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${isBoothMode?'bg-purple-500/20 text-purple-400':'text-neutral-500 hover:text-white'}`}><Images size={16} />BOOTH</button>
-                        </>
+                        <button onClick={() => setTimerDuration(p => p===0?3:p===3?10:0)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${timerDuration>0?'bg-yellow-500/20 text-yellow-500':'text-neutral-500 hover:text-white'}`}><Timer size={14} />{timerDuration>0 && `${timerDuration}s`}</button>
                     )}
-                    <button onClick={() => setFacingMode(p => p==='user'?'environment':'user')} className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold text-neutral-500 hover:text-white transition-all hover:bg-white/10"><RotateCcw size={16} /></button>
+                    <button onClick={() => setFacingMode(p => p==='user'?'environment':'user')} className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-white/10"><RotateCcw size={14} /></button>
                 </div>
             </div>
             
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide text-[10px] font-bold">
                 {categories.map(cat => (<button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-full border transition-all whitespace-nowrap ${selectedCategory===cat?'bg-neutral-200 text-black border-neutral-200':'bg-transparent text-neutral-500 border-neutral-700 hover:border-neutral-500'}`}>{cat}</button>))}
             </div>
-            
+
             <div className="relative group">
                 <button onClick={() => scrollFilters('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-r-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronLeft size={16} /></button>
-                <div ref={scrollContainerRef} className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x px-1 pt-2">
+                <div ref={scrollContainerRef} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x px-1">
                 {visibleFilters.map(([key, config]) => (
-                    <button key={key} onClick={() => setFilterMode(key)} className={`flex-shrink-0 p-3 rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95 snap-start min-w-[5.5rem] border relative overflow-hidden ${filterMode===key?'bg-[#252525] text-white border-white/20 shadow-lg ring-1 ring-white/10':'bg-[#222] text-neutral-600 border-transparent hover:bg-[#2a2a2a] hover:text-neutral-400'}`}>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-neutral-700 to-neutral-800 flex items-center justify-center shadow-inner mb-1"><span className="text-[10px] font-black opacity-30">{key.slice(0, 2).toUpperCase()}</span></div>
-                    <span className="text-[9px] font-bold whitespace-nowrap text-center max-w-[70px] overflow-hidden text-ellipsis z-10 relative">{config.name}</span>
-                    {filterMode === key && <div className="absolute bottom-0 left-0 w-full h-1 bg-red-500"></div>}
+                    <button key={key} onClick={() => setFilterMode(key)} className={`flex-shrink-0 p-2 rounded-xl flex flex-col items-center gap-1 transition-all active:scale-95 snap-start min-w-[4.5rem] border relative overflow-hidden ${filterMode===key?'bg-[#252525] text-white border-white/20 shadow-lg ring-1 ring-white/10':'bg-[#222] text-neutral-600 border-transparent'}`}>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neutral-700 to-neutral-800 flex items-center justify-center shadow-inner"><span className="text-[8px] font-black opacity-30">{key.slice(0, 2).toUpperCase()}</span></div>
+                    <span className="text-[8px] font-bold whitespace-nowrap z-10 relative">{config.name}</span>
+                    {filterMode === key && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-red-500"></div>}
                     </button>
                 ))}
                 </div>
                 <button onClick={() => scrollFilters('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-l-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronRight size={16} /></button>
             </div>
 
-            <div className="flex justify-between items-center px-4 pt-2">
-               <div className="text-[10px] text-neutral-600 w-1/3 font-bold tracking-widest">{mode === 'video' ? (isRecording ? formatTime(recordingTime) : 'READY') : (timerDuration>0?`TIMER: ${timerDuration}s`:'READY')}</div>
-              
+            <div className="flex justify-between items-center px-2 pt-1">
+               <div className="w-12"></div>
               <button onClick={mode === 'photo' ? handleShootClick : handleRecordToggle} disabled={!!error || !stream || countdown !== null} className={`relative group touch-manipulation ${error||!stream?'opacity-50 cursor-not-allowed':'cursor-pointer'}`}>
-                {mode === 'photo' ? (
-                    <>
-                        <div className="absolute inset-0 bg-red-900 rounded-full transform translate-y-2 group-active:translate-y-1 transition-transform duration-100 shadow-md"></div>
-                        <div className="relative w-24 h-24 bg-gradient-to-b from-red-500 to-red-700 rounded-full border-8 border-[#151515] shadow-2xl active:scale-95 transition-all duration-100 flex items-center justify-center ring-4 ring-[#222]"><div className="w-20 h-20 rounded-full border border-white/20 bg-gradient-to-br from-white/20 to-transparent"></div></div>
-                    </>
-                ) : (
-                    <>
-                        <div className={`absolute inset-0 ${isRecording ? 'bg-red-900' : 'bg-neutral-800'} rounded-full transform translate-y-2 transition-transform shadow-md`}></div>
-                        <div className={`relative w-24 h-24 ${isRecording ? 'bg-red-600' : 'bg-white'} rounded-full border-8 border-[#151515] shadow-2xl active:scale-95 transition-all duration-100 flex items-center justify-center ring-4 ring-[#222]`}>
-                            {isRecording ? <StopCircle size={40} className="text-white fill-current" /> : <div className="w-6 h-6 bg-red-600 rounded-full"></div>}
-                        </div>
-                    </>
-                )}
+                <div className={`relative w-20 h-20 ${isRecording ? 'bg-white' : 'bg-gradient-to-b from-red-500 to-red-700'} rounded-full border-[6px] border-[#151515] shadow-2xl active:scale-95 transition-all duration-100 flex items-center justify-center ring-4 ring-[#222]`}>
+                    {isRecording ? <div className="w-6 h-6 bg-red-600 rounded-sm"></div> : <div className="w-16 h-16 rounded-full border border-white/20 bg-gradient-to-br from-white/20 to-transparent"></div>}
+                </div>
               </button>
-
-              <div className="w-1/3 flex justify-end"><div className="flex flex-col items-end gap-1"><div className="grid grid-cols-3 gap-1 opacity-20">{[...Array(9)].map((_,i)=><div key={i} className="w-1 h-1 rounded-full bg-white"></div>)}</div><div className="hidden md:flex text-[9px] text-neutral-600 gap-1 mt-1"><span className="border border-neutral-700 px-1 rounded">SPACE</span></div></div></div>
+              <div className="w-12 flex justify-end"><div className="grid grid-cols-3 gap-0.5 opacity-20">{[...Array(9)].map((_,i)=><div key={i} className="w-1 h-1 rounded-full bg-white"></div>)}</div></div>
             </div>
           </div>
         </div>
 
-        {/* --- DARKROOM (Recent Prints) --- */}
-        <div className="w-full xl:w-[500px] shrink-0 min-h-[500px]">
+        {/* --- DARKROOM GALLERY (Hidden on mobile if tab is 'camera') --- */}
+        <div className={`${activeTab === 'gallery' ? 'block' : 'hidden md:block'} w-full md:w-[500px] shrink-0 min-h-[500px] px-2`}>
            
-           {/* --- PASTE THIS NEW BLOCK HERE --- */}
+           {/* Drive Link Box */}
            {driveLink && (
-               <div className="mb-6 p-4 bg-[#1a1a1a] rounded-2xl border border-white/10 flex flex-col gap-2">
+               <div className="mb-6 p-4 bg-[#1a1a1a] rounded-2xl border border-white/10 flex flex-col gap-2 shadow-lg">
                    <div className="flex justify-between items-start">
                        <div>
                            <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Shared Album</p>
-                           <h3 className="text-white font-bold">{eventName || "Party Photos"}</h3>
+                           <h3 className="text-white font-bold leading-tight">{eventName || "Party Photos"}</h3>
                        </div>
-                       <a href={driveLink} target="_blank" rel="noreferrer" className="bg-blue-600 text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-blue-500 flex items-center gap-2">
-                           VIEW ALBUM <ExternalLink size={14} />
+                       <a href={driveLink} target="_blank" rel="noreferrer" className="bg-blue-600 text-white text-[10px] font-bold px-3 py-2 rounded-lg hover:bg-blue-500 flex items-center gap-1 shadow-lg shadow-blue-900/20">
+                           VIEW <ExternalLink size={12} />
                        </a>
                    </div>
-                   <p className="text-[10px] text-neutral-400">Photos uploaded here are visible to everyone at the party.</p>
                </div>
            )}
-           {/* ---------------------------------- */}
 
-           <div className="flex justify-between items-end mb-6 border-b border-white/10 pb-2">
+           <div className="flex justify-between items-end mb-4 border-b border-white/10 pb-2">
               <div><div className="text-xs font-black text-neutral-500 uppercase tracking-widest mb-1">Darkroom</div><h2 className="text-xl font-bold text-white">Recent Prints</h2></div>
-              <span className="text-xs font-mono text-neutral-600 bg-neutral-800 px-2 py-1 rounded">{photos.length} ITEMS</span>
+              <span className="text-xs font-mono text-neutral-400 bg-neutral-800 px-2 py-1 rounded">{photos.length} ITEMS</span>
            </div>
            
-           <div className="grid grid-cols-2 gap-4 pb-20">
-            {photos.length === 0 && <div className="col-span-2 flex flex-col items-center justify-center text-neutral-700 gap-4 py-20 opacity-50"><Camera size={48} strokeWidth={1} /><p className="text-sm font-mono">No photos yet.</p></div>}
+           <div className="grid grid-cols-2 gap-3 pb-32">
+            {photos.length === 0 && <div className="col-span-2 flex flex-col items-center justify-center text-neutral-700 gap-4 py-20 opacity-50"><Images size={48} strokeWidth={1} /><p className="text-sm font-mono">No photos yet.</p></div>}
             
-            {/* --- NEW: GRID CARD WITH SELECTION --- */}
             {photos.map((photo) => {
                 const isSelected = selectedPhotos.has(photo.id);
                 return (
-                <div key={photo.id} onClick={() => toggleSelection(photo.id)} className={`relative group/photo cursor-pointer transition-all duration-200 ${isSelected ? 'scale-95 ring-4 ring-blue-500 rounded-sm z-10' : 'hover:scale-[1.02]'}`}>
-                    <div className="bg-[#f4f4f4] p-2 pb-6 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-                        <div className={`bg-[#101010] ${photo.isStrip?'p-2':'aspect-[1/1.05]'} overflow-hidden relative shadow-inner`}>
+                <div key={photo.id} onClick={() => toggleSelection(photo.id)} className={`relative transition-all duration-200 ${isSelected ? 'scale-95 ring-2 ring-blue-500 rounded-sm z-10' : 'active:scale-95'}`}>
+                    <div className="bg-[#f4f4f4] p-1.5 pb-4 shadow-md">
+                        <div className={`bg-[#101010] ${photo.isStrip?'p-1':'aspect-[1/1.05]'} overflow-hidden relative shadow-inner`}>
                             {photo.type === 'video' ? (
                                 <video src={photo.imageUrl} className="w-full h-full object-cover" muted />
                             ) : (
                                 <img src={photo.imageUrl} alt="Print" className={`w-full h-full object-cover developing-image`} />
                             )}
-                            {/* Visual Overlays */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-10"></div>
                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay pointer-events-none z-10"></div>
                             
-                            {/* --- SELECTION INDICATOR --- */}
                             <div className="absolute top-2 right-2 z-20">
-                                {isSelected ? <CheckCircle2 className="text-blue-500 bg-white rounded-full" size={20} /> : <Circle className="text-white/50" size={20} />}
+                                {isSelected ? <CheckCircle2 className="text-blue-500 bg-white rounded-full" size={18} /> : <Circle className="text-white/50 drop-shadow-md" size={18} />}
                             </div>
 
-                            {/* --- DOWNLOAD BUTTON (Does NOT select) --- */}
-                            <button onClick={(e) => saveToDevice(e, photo)} className="absolute bottom-2 right-2 p-2 bg-black/50 hover:bg-white hover:text-black text-white rounded-full z-20 transition-colors" title="Save to Device">
-                                <Download size={14} />
+                            <button onClick={(e) => saveToDevice(e, photo)} className="absolute bottom-2 right-2 p-1.5 bg-black/40 backdrop-blur-sm text-white rounded-full z-20" title="Save">
+                                <Download size={12} />
                             </button>
                         </div>
                         <div className="mt-2 px-1 relative">
                              <div className="relative group/edit">
-                                <input type="text" onClick={(e) => e.stopPropagation()} value={photo.caption} onChange={(e) => updateCaption(photo.id, e.target.value)} className="w-full bg-transparent border-b border-transparent hover:border-blue-900/20 focus:border-blue-900 focus:outline-none text-[10px] font-serif italic text-blue-900/80 text-center placeholder-blue-900/30 transition-all truncate" placeholder="Write caption..." />
+                                <input type="text" onClick={(e) => e.stopPropagation()} value={photo.caption} onChange={(e) => updateCaption(photo.id, e.target.value)} className="w-full bg-transparent border-b border-transparent hover:border-blue-900/20 focus:border-blue-900 focus:outline-none text-[9px] font-serif italic text-blue-900/80 text-center placeholder-blue-900/30 transition-all truncate" placeholder="Write caption..." />
                             </div>
                         </div>
                     </div>
@@ -731,58 +712,63 @@ const RetroCamera = ({ eventId = null }) => {
         </div>
       </div>
 
-      {/* --- NEW: FLOATING BATCH UPLOAD BAR --- */}
+      {/* --- MOBILE BOTTOM NAVIGATION (Visible only on Mobile) --- */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-neutral-900 border-t border-white/10 p-4 pb-8 z-40 flex justify-around items-center safe-area-bottom">
+          <button 
+            onClick={() => setActiveTab('camera')} 
+            className={`flex flex-col items-center gap-1 ${activeTab === 'camera' ? 'text-white' : 'text-neutral-500'}`}
+          >
+              <Camera size={24} strokeWidth={activeTab === 'camera' ? 2.5 : 1.5} />
+              <span className="text-[10px] font-bold tracking-widest">CAMERA</span>
+          </button>
+          
+          <div className="w-px h-8 bg-white/10"></div>
+
+          <button 
+            onClick={() => setActiveTab('gallery')} 
+            className={`relative flex flex-col items-center gap-1 ${activeTab === 'gallery' ? 'text-white' : 'text-neutral-500'}`}
+          >
+              <div className="relative">
+                <Images size={24} strokeWidth={activeTab === 'gallery' ? 2.5 : 1.5} />
+                {photos.length > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-neutral-900"></span>}
+              </div>
+              <span className="text-[10px] font-bold tracking-widest">PRINTS</span>
+          </button>
+      </div>
+
+      {/* --- FLOATING BATCH ACTION BAR --- */}
       {selectedPhotos.size > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-4 animate-bounce-in border border-white/20">
-              <span className="font-bold text-sm whitespace-nowrap">{selectedPhotos.size} Selected</span>
-              <div className="h-6 w-px bg-white/20"></div>
+          <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] flex items-center gap-4 animate-bounce-in border border-white/20 w-[90%] max-w-sm justify-between">
+              <span className="font-bold text-sm whitespace-nowrap">{selectedPhotos.size} <span className="hidden sm:inline">Selected</span></span>
               
-              {/* 1. BATCH SAVE TO DEVICE */}
-              <button 
-                  onClick={async () => {
+              <div className="flex items-center gap-3">
+                {/* Save Button */}
+                <button onClick={async () => {
                       const selectedItems = photos.filter(p => selectedPhotos.has(p.id));
                       for (let i = 0; i < selectedItems.length; i++) {
                           const item = selectedItems[i];
                           if (item.type === 'video') {
-                             // Videos just download
-                             const a = document.createElement('a');
-                             a.href = item.imageUrl;
-                             a.download = `retro-motion-${item.id}.webm`;
-                             document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                             const a = document.createElement('a'); a.href = item.imageUrl; a.download = `retro-motion-${item.id}.webm`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
                           } else {
-                             // Photos get baked
                              const blob = await bakePolaroid(item);
                              const url = URL.createObjectURL(blob);
-                             const a = document.createElement('a');
-                             a.href = url;
-                             a.download = `retro-${item.id}.jpg`;
-                             document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                             const a = document.createElement('a'); a.href = url; a.download = `retro-${item.id}.jpg`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
                           }
                           await new Promise(r => setTimeout(r, 500));
                       }
                       setSelectedPhotos(new Set());
-                  }}
-                  className="font-bold text-sm flex items-center gap-2 hover:text-green-400 transition-colors whitespace-nowrap"
-              >
-                  SAVE <Download size={18} />
-              </button>
+                }} className="bg-white/10 p-2 rounded-full hover:bg-green-500/20 text-green-400"><Download size={18} /></button>
 
-              {/* 2. UPLOAD TO HOST (Only shows if eventId exists) */}
-              {eventId && (
-                  <>
-                      <div className="h-6 w-px bg-white/20"></div>
-                      <button 
-                          onClick={handleBatchUpload} 
-                          disabled={isUploading} 
-                          className="font-bold text-sm flex items-center gap-2 hover:text-blue-400 transition-colors whitespace-nowrap"
-                      >
-                          {isUploading ? 'UPLOADING...' : <> UPLOAD <CloudUpload size={18} /></>}
-                      </button>
-                  </>
-              )}
+                {/* Upload Button */}
+                {eventId && (
+                    <button onClick={handleBatchUpload} disabled={isUploading} className="bg-blue-600 p-2 px-4 rounded-full text-white font-bold text-xs flex items-center gap-2">
+                        {isUploading ? '...' : <>UPLOAD <CloudUpload size={16} /></>}
+                    </button>
+                )}
 
-              <div className="h-6 w-px bg-white/20"></div>
-              <button onClick={handleBatchDelete} className="opacity-50 hover:opacity-100 hover:text-red-500"><Trash2 size={16}/></button>
+                {/* Delete Button */}
+                <button onClick={handleBatchDelete} className="bg-white/10 p-2 rounded-full hover:bg-red-500/20 text-red-500"><Trash2 size={18}/></button>
+              </div>
           </div>
       )}
     </div>
