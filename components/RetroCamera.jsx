@@ -444,9 +444,16 @@ const RetroCamera = ({ eventId = null }) => {
         finalUrl = shots[0].toDataURL('image/jpeg', 0.95);
     }
 
+    // --- STEP 2 CHANGE: Marker Date Format ---
+    const dateObj = new Date();
+    const day = dateObj.getDate().toString().padStart(2, '0');
+    const month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
+    const year = dateObj.getFullYear().toString().slice(-2);
+    const markerDate = `${day} ${month} '${year}`;
+
     setPhotos(p => [{
         id: Date.now(), filter: filterMode, imageUrl: finalUrl, type: 'photo',
-        timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: markerDate, // <--- Using the new date format
         caption: FILTER_TYPES[filterMode]?.name || 'Memories', isStrip
     }, ...p]);
     setShutterCount(c => c + 1);
@@ -550,10 +557,21 @@ const RetroCamera = ({ eventId = null }) => {
               ctx.fillStyle = 'rgba(10,20,80,0.85)'; 
               ctx.fillText(photoItem.caption, bor, pH + bor + 80);
               
+              // --- STEP 3 CHANGE: Marker Font & Rotation ---
               ctx.textAlign = 'right'; 
-              ctx.font = 'bold 30px monospace'; 
-              ctx.fillStyle = 'rgba(0,0,0,0.3)'; 
-              ctx.fillText(photoItem.timestamp, baseW - bor, pH + bor + 150);
+              
+              // Use Permanent Marker font (Ensure you added the import to globals.css!)
+              ctx.font = '40px "Permanent Marker", cursive, sans-serif'; 
+              
+              // Dark Blue/Black Ink Color
+              ctx.fillStyle = 'rgba(20, 20, 80, 0.85)'; 
+              
+              // Rotate slightly (-0.05 radians) to look handwritten
+              ctx.save();
+              ctx.translate(baseW - bor, pH + bor + 140);
+              ctx.rotate(-0.05); 
+              ctx.fillText(photoItem.timestamp, 0, 0);
+              ctx.restore();
 
               cvs.toBlob((blob) => resolve(blob), 'image/jpeg', 0.95);
           };
