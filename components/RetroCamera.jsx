@@ -246,39 +246,80 @@ const RetroCamera = ({ eventId = null }) => {
     if (typeof window === 'undefined') return;
 
     const startCamera = async () => {
-      // Stop old tracks, including turning off torch if it was on
+      // 1. CLEANUP: Stop old tracks if they exist
       if (stream) {
-        stream.getTracks().forEach(track => {
-            track.stop();
-        });
+        stream.getTracks().forEach(track => track.stop());
       }
-      setIsTorchOn(false); // Reset UI state
+      setIsTorchOn(false);
 
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        // 2. DEFINE CONSTRAINTS
+        const constraints = { 
           video: { 
             width: { ideal: 1280 }, 
             height: { ideal: 720 }, 
             facingMode: facingMode 
           },
           audio: mode === 'video'
-        });
+        };
 
-        // --- NEW: CHECK TORCH CAPABILITY ---
+        // 3. PERMISSION CHECK (The Fix)
+        // We attempt to query the permission status first.
+        let shouldRequestStream = true;
+
+        if (navigator.permissions && navigator.permissions.query) {
+            try {
+                // Note: Firefox requires 'video' in some versions, Chrome 'camera'
+                // We wrap this in try/catch because not all browsers support querying 'camera'
+                const permissionName = navigator.userAgent.toLowerCase().includes('firefox') ? 'video' : 'camera';
+                
+                const status = await navigator.permissions.query({ name: permissionName });
+                
+                if (status.state === 'denied') {
+                    setError("Camera permission denied. Please reset permissions in your browser address bar.");
+                    shouldRequestStream = false;
+                }
+                // If 'granted' or 'prompt', we proceed.
+            } catch (e) {
+                // If the browser doesn't support the query, we simply proceed to try opening the camera
+                console.log("Permission query not supported by this browser, proceeding to request...");
+            }
+        }
+
+        if (!shouldRequestStream) return;
+
+        // 4. GET MEDIA STREAM
+        // If permission was already 'granted', this resolves instantly without a prompt.
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        // 5. CHECK TORCH SUPPORT (Your Feature)
         const track = mediaStream.getVideoTracks()[0];
         const capabilities = track.getCapabilities ? track.getCapabilities() : {};
         setSupportsTorch(!!capabilities.torch);
-        // -----------------------------------
 
+        // 6. SET STREAM
         setStream(mediaStream);
         if (videoRef.current) videoRef.current.srcObject = mediaStream;
+
       } catch (err) {
         console.error("Camera error:", err);
-        setError("Camera access denied.");
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+             setError("Camera access denied. Please allow camera access to take photos.");
+        } else {
+             setError("Could not start camera.");
+        }
       }
     };
+
     startCamera();
-  }, [facingMode, mode]); // (Dependencies remain the same)
+    
+    // Cleanup function when component unmounts or dependencies change
+    return () => {
+        // We don't stop tracks here to prevent flickering during quick state changes,
+        // but the startCamera logic handles stopping previous tracks.
+    };
+
+  }, [facingMode, mode]);
 
   // --- INTERACTION ---
   const cycleFilter = useCallback((direction) => {
