@@ -225,6 +225,27 @@ const RetroCamera = ({ eventId = null }) => {
     }
   };
 
+  // --- NEW: PRELOAD FONT ---
+  const [fontLoaded, setFontLoaded] = useState(false);
+
+  useEffect(() => {
+    // 1. Define the font face
+    // Ensure the name matches what you use in bakePolaroid exactly
+    const font = new FontFace('Permanent Marker', 'url(https://fonts.gstatic.com/s/permanentmarker/v16/Fh4uPib9Iyv2ucM6pGQMWimMp004La2C.woff2)');
+
+    // 2. Load it
+    font.load().then((loadedFont) => {
+      // 3. Add to document
+      document.fonts.add(loadedFont);
+      setFontLoaded(true);
+      console.log("Font loaded successfully");
+    }).catch((err) => {
+      console.error("Font failed to load:", err);
+      // Fallback: set true anyway so app doesn't freeze, but log error
+      setFontLoaded(true);
+    });
+  }, []);
+
   // --- FETCH LINK ON LOAD ---
   useEffect(() => {
       if (eventId) {
@@ -548,34 +569,40 @@ const RetroCamera = ({ eventId = null }) => {
               ctx.drawImage(img, bor, bor, pW, pH);
               
               // --- DRAW TEXT ON POLAROID ---
-              ctx.textBaseline = 'top';
-              ctx.font = 'bold 24px sans-serif'; 
-              ctx.fillStyle = 'rgba(0,0,0,0.2)'; 
-              // CHANGE 1: Update branding text
-              ctx.fillText("RETROCAM", bor, pH + bor + 20);
-              
-              // Draw Caption
-              ctx.font = 'italic 40px serif'; 
-              ctx.fillStyle = 'rgba(10,20,80,0.85)'; 
-              ctx.fillText(photoItem.caption, bor, pH + bor + 80);
-              
-              // --- CHANGE 2: NEW BOLD MARKER FONT ---
-              ctx.textAlign = 'right'; 
-              
-              // Use the "Permanent Marker" font and increase size to 45px for bolder look
-              ctx.font = '45px "Permanent Marker", cursive, sans-serif'; 
-              
-              // A dark, opaque ink color like a real Sharpie
-              ctx.fillStyle = 'rgba(20, 20, 80, 1.0)'; 
-              
-              // Apply a slight rotation for a hand-written look
-              ctx.save();
-              ctx.translate(baseW - bor, pH + bor + 140);
-              ctx.rotate(-0.04); // Slightly less rotation for a sturdier look
-              ctx.fillText(photoItem.timestamp, 0, 0);
-              ctx.restore();
+              // CRITICAL FIX: Wait for fonts to be ready before drawing text or saving
+              document.fonts.ready.then(() => {
+                  
+                  ctx.textBaseline = 'top';
+                  ctx.font = 'bold 24px sans-serif'; 
+                  ctx.fillStyle = 'rgba(0,0,0,0.2)'; 
+                  // CHANGE 1: Update branding text
+                  ctx.fillText("RETROCAM", bor, pH + bor + 20);
+                  
+                  // Draw Caption
+                  ctx.font = 'italic 40px serif'; 
+                  ctx.fillStyle = 'rgba(10,20,80,0.85)'; 
+                  ctx.fillText(photoItem.caption, bor, pH + bor + 80);
+                  
+                  // --- CHANGE 2: NEW BOLD MARKER FONT ---
+                  ctx.textAlign = 'right'; 
+                  
+                  // Use the "Permanent Marker" font 
+                  ctx.font = '45px "Permanent Marker", cursive, sans-serif'; 
+                  
+                  // A dark, opaque ink color like a real Sharpie
+                  ctx.fillStyle = 'rgba(20, 20, 80, 1.0)'; 
+                  
+                  // Apply a slight rotation for a hand-written look
+                  ctx.save();
+                  ctx.translate(baseW - bor, pH + bor + 140);
+                  ctx.rotate(-0.04); 
+                  ctx.fillText(photoItem.timestamp, 0, 0);
+                  ctx.restore();
 
-              cvs.toBlob((blob) => resolve(blob), 'image/jpeg', 0.95);
+                  // MOVED INSIDE: Only save the blob AFTER the text is drawn
+                  cvs.toBlob((blob) => resolve(blob), 'image/jpeg', 0.95);
+              });
+
           };
           img.src = photoItem.imageUrl;
       });
