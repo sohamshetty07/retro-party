@@ -547,26 +547,26 @@ const RetroCamera = ({ eventId = null }) => {
               // Draw Photo
               ctx.drawImage(img, bor, bor, pW, pH);
               
-              // Draw Text
+              // --- DRAW TEXT ON POLAROID ---
               ctx.textBaseline = 'top';
               ctx.font = 'bold 24px sans-serif'; 
               ctx.fillStyle = 'rgba(0,0,0,0.2)'; 
-              ctx.fillText("FUJIFILM INSTAX", bor, pH + bor + 20);
+              // CHANGE 1: Update branding text
+              ctx.fillText("RETROCAM", bor, pH + bor + 20);
               
-              ctx.font = 'italic 50px serif'; 
+              // Draw Caption
+              ctx.font = 'italic 40px serif'; 
               ctx.fillStyle = 'rgba(10,20,80,0.85)'; 
               ctx.fillText(photoItem.caption, bor, pH + bor + 80);
               
-              // --- STEP 3 CHANGE: Marker Font & Rotation ---
+              // --- CHANGE 2: NEW THICKER MARKER FONT & STYLE ---
               ctx.textAlign = 'right'; 
+              // Use the new, thicker "Patrick Hand SC" font
+              ctx.font = '40px "Patrick Hand SC", cursive, sans-serif'; 
+              // A slightly more opaque, dark ink color
+              ctx.fillStyle = 'rgba(20, 20, 80, 0.95)'; 
               
-              // Use Permanent Marker font (Ensure you added the import to globals.css!)
-              ctx.font = '40px "Permanent Marker", cursive, sans-serif'; 
-              
-              // Dark Blue/Black Ink Color
-              ctx.fillStyle = 'rgba(20, 20, 80, 0.85)'; 
-              
-              // Rotate slightly (-0.05 radians) to look handwritten
+              // Apply a slight rotation for a hand-written look
               ctx.save();
               ctx.translate(baseW - bor, pH + bor + 140);
               ctx.rotate(-0.05); 
