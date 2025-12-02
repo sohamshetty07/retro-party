@@ -693,6 +693,11 @@ const RetroCamera = ({ eventId = null }) => {
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
       `}</style>
 
+      {/* --- TRICK FOR IPHONE: FORCE FONT TO LOAD --- */}
+      <div style={{ fontFamily: '"Permanent Marker", cursive', opacity: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
+        RETROCAM LOADING...
+      </div>
+
       {/* --- HEADER --- */}
       <div className="w-full max-w-6xl flex justify-between items-center mb-4 px-2 z-20">
          <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter italic">RETRO<span className="text-red-500">CAM</span></h1>
