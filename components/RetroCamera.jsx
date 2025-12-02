@@ -559,17 +559,19 @@ const RetroCamera = ({ eventId = null }) => {
               ctx.fillStyle = 'rgba(10,20,80,0.85)'; 
               ctx.fillText(photoItem.caption, bor, pH + bor + 80);
               
-              // --- CHANGE 2: NEW THICKER MARKER FONT & STYLE ---
+              // --- CHANGE 2: NEW BOLD MARKER FONT ---
               ctx.textAlign = 'right'; 
-              // Use the new, thicker "Patrick Hand SC" font
-              ctx.font = '40px "Patrick Hand SC", cursive, sans-serif'; 
-              // A slightly more opaque, dark ink color
-              ctx.fillStyle = 'rgba(20, 20, 80, 0.95)'; 
+              
+              // Use the "Permanent Marker" font and increase size to 45px for bolder look
+              ctx.font = '45px "Permanent Marker", cursive, sans-serif'; 
+              
+              // A dark, opaque ink color like a real Sharpie
+              ctx.fillStyle = 'rgba(20, 20, 80, 1.0)'; 
               
               // Apply a slight rotation for a hand-written look
               ctx.save();
               ctx.translate(baseW - bor, pH + bor + 140);
-              ctx.rotate(-0.05); 
+              ctx.rotate(-0.04); // Slightly less rotation for a sturdier look
               ctx.fillText(photoItem.timestamp, 0, 0);
               ctx.restore();
 
