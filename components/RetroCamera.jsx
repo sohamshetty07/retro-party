@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Camera, Battery, Download, AlertCircle, Timer, RotateCcw, Images, Smartphone, Edit3, ChevronLeft, ChevronRight, Maximize2, Minimize2, Trash2, Video, StopCircle, CloudUpload, CheckCircle2, Circle, ExternalLink } from 'lucide-react';
+import { Camera, Battery, Download, AlertCircle, Timer, RotateCcw, Images, Smartphone, Edit3, ChevronLeft, ChevronRight, Maximize2, Minimize2, Trash2, Video, StopCircle, CloudUpload, CheckCircle2, Circle, ExternalLink, Zap, ZapOff } from 'lucide-react';
 
 // --- SOUND ENGINE (Unchanged) ---
 const playSound = (type) => {
@@ -107,6 +107,16 @@ const getFilterString = (config) => {
 
 // --- FILTER LIBRARY ---
 const FILTER_TYPES = {
+  // === NEW DEFAULT ===
+  normal: { 
+    name: 'Standard', 
+    category: 'Classic', 
+    contrast: 1.05, 
+    brightness: 1.05, 
+    saturate: 1.1,
+    // No overlayColor means natural colors
+  },
+  
   // === CLASSIC (6) ===
   sepia: { name: '1980 Sepia', category: 'Classic', contrast: 1.1, brightness: 0.9, sepia: 0.9, overlayColor: 'rgba(140, 60, 10, 0.4)', overlayBlend: 'overlay' },
   neon: { name: '1990 Neon', category: 'Classic', saturate: 2.0, contrast: 1.1, brightness: 1.1, hueRotate: 10, overlayColor: 'rgba(220, 0, 255, 0.2)', overlayBlend: 'screen' },
@@ -150,7 +160,9 @@ const FILTER_TYPES = {
 
 const RetroCamera = ({ eventId = null }) => {
   // --- STATE ---
-  const [filterMode, setFilterMode] = useState('sepia');
+  const [filterMode, setFilterMode] = useState('normal');
+  const [isTorchOn, setIsTorchOn] = useState(false); 
+  const [supportsTorch, setSupportsTorch] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [selectedPhotos, setSelectedPhotos] = useState(new Set()); // NEW: Track selections
   const [shutterCount, setShutterCount] = useState(0);
@@ -174,6 +186,7 @@ const RetroCamera = ({ eventId = null }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusPoint, setFocusPoint] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  
 
   const videoRef = useRef(null);
   const recordingCanvasRef = useRef(null);
@@ -194,6 +207,23 @@ const RetroCamera = ({ eventId = null }) => {
         return config.category === selectedCategory;
     });
   }, [selectedCategory]);
+
+  // --- NEW: TORCH HANDLER ---
+  const toggleTorch = async () => {
+    if (!stream) return;
+    const track = stream.getVideoTracks()[0];
+    
+    try {
+      // Toggle logic
+      const newStatus = !isTorchOn;
+      await track.applyConstraints({ advanced: [{ torch: newStatus }] });
+      setIsTorchOn(newStatus);
+    } catch (err) {
+      console.error("Torch error:", err);
+      // Fallback: If hardware fails, just use software flash
+      setIsFlashing(true); setTimeout(() => setIsFlashing(false), 150);
+    }
+  };
 
   // --- FETCH LINK ON LOAD ---
   useEffect(() => {
@@ -216,12 +246,30 @@ const RetroCamera = ({ eventId = null }) => {
     if (typeof window === 'undefined') return;
 
     const startCamera = async () => {
-      if (stream) stream.getTracks().forEach(track => track.stop());
+      // Stop old tracks, including turning off torch if it was on
+      if (stream) {
+        stream.getTracks().forEach(track => {
+            track.stop();
+        });
+      }
+      setIsTorchOn(false); // Reset UI state
+
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: facingMode },
+          video: { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 }, 
+            facingMode: facingMode 
+          },
           audio: mode === 'video'
         });
+
+        // --- NEW: CHECK TORCH CAPABILITY ---
+        const track = mediaStream.getVideoTracks()[0];
+        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+        setSupportsTorch(!!capabilities.torch);
+        // -----------------------------------
+
         setStream(mediaStream);
         if (videoRef.current) videoRef.current.srcObject = mediaStream;
       } catch (err) {
@@ -230,7 +278,7 @@ const RetroCamera = ({ eventId = null }) => {
       }
     };
     startCamera();
-  }, [facingMode, mode]);
+  }, [facingMode, mode]); // (Dependencies remain the same)
 
   // --- INTERACTION ---
   const cycleFilter = useCallback((direction) => {
@@ -626,9 +674,19 @@ const RetroCamera = ({ eventId = null }) => {
                             <button onClick={() => setIsBoothMode(!isBoothMode)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isBoothMode?'bg-purple-500/20 text-purple-400':'text-neutral-500 hover:text-white'}`}>
                                 <Images size={14} />
                             </button>
+                             {/* --- NEW: FLASH/TORCH BUTTON --- */}
+                             {supportsTorch && (
+                              <button
+                                onClick={toggleTorch}
+                                className={`p-2 rounded-lg transition-all ${isTorchOn ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/50' : 'text-neutral-500 hover:text-white hover:bg-white/10'}`}
+                              >
+                                {isTorchOn ? <Zap size={14} fill="currentColor" /> : <ZapOff size={14} />}
+                              </button>
+                            )}
                         </>
                     )}
-                    {/* ROTATE BUTTON */}
+
+                    {/* EXISTING ROTATE BUTTON */}
                     <button onClick={() => setFacingMode(p => p==='user'?'environment':'user')} className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-white/10"><RotateCcw size={14} /></button>
                 </div>
             </div>
