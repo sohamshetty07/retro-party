@@ -821,11 +821,7 @@ const RetroCamera = ({ eventId = null }) => {
                             <button onClick={() => setTimerDuration(p => p===0?3:p===3?10:0)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${timerDuration>0?'bg-yellow-500/20 text-yellow-500':'text-neutral-500 hover:text-white'}`}>
                                 <Timer size={14} />{timerDuration>0 && `${timerDuration}s`}
                             </button>
-                            
-                            {/* BOOTH BUTTON */}
-                            <button onClick={() => setIsBoothMode(!isBoothMode)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isBoothMode?'bg-purple-500/20 text-purple-400':'text-neutral-500 hover:text-white'}`}>
-                                <Images size={14} />
-                            </button>
+
                              {/* FLASH/TORCH BUTTON */}
                              {supportsTorch && (
                               <button
@@ -861,21 +857,66 @@ const RetroCamera = ({ eventId = null }) => {
                 <button onClick={() => scrollFilters('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-l-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronRight size={16} /></button>
             </div>
 
-            <div className="flex justify-between items-center px-2 pt-1">
-               <div className="w-12"></div>
+            {/* --- NEW SHUTTER ROW LAYOUT --- */}
+            <div className="flex justify-between items-end px-4 pt-2">
+               
+               {/* LEFT: BOOTH MODE BUTTON */}
+               <button 
+                 onClick={() => setIsBoothMode(!isBoothMode)} 
+                 className="w-16 flex flex-col items-center gap-1 group active:scale-95 transition-transform"
+               >
+                 <div className={`p-3 rounded-full border transition-all ${isBoothMode ? 'bg-purple-500/20 border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'bg-white/5 border-white/10 text-neutral-400'}`}>
+                    {/* Icon for Booth (Stacked Images) */}
+                    <Images size={20} strokeWidth={2} />
+                 </div>
+                 <span className={`text-[9px] font-bold tracking-wider ${isBoothMode ? 'text-purple-400' : 'text-neutral-500'}`}>BOOTH</span>
+               </button>
+
+              {/* CENTER: SHUTTER BUTTON (Existing Code) */}
               <button onClick={mode === 'photo' ? handleShootClick : handleRecordToggle} disabled={!!error || !stream || countdown !== null} className={`relative group touch-manipulation ${error||!stream?'opacity-50 cursor-not-allowed':'cursor-pointer'}`}>
                 <div className={`relative w-20 h-20 ${isRecording ? 'bg-white' : 'bg-gradient-to-b from-red-500 to-red-700'} rounded-full border-[6px] border-[#151515] shadow-2xl active:scale-95 transition-all duration-100 flex items-center justify-center ring-4 ring-[#222]`}>
                     {isRecording ? <div className="w-6 h-6 bg-red-600 rounded-sm"></div> : <div className="w-16 h-16 rounded-full border border-white/20 bg-gradient-to-br from-white/20 to-transparent"></div>}
                 </div>
               </button>
-              <div className="w-12 flex justify-end"><div className="grid grid-cols-3 gap-0.5 opacity-20">{[...Array(9)].map((_,i)=><div key={i} className="w-1 h-1 rounded-full bg-white"></div>)}</div></div>
+
+              {/* RIGHT: PRINTS / GALLERY BUTTON */}
+              <button 
+                 onClick={() => setActiveTab('gallery')} 
+                 className="w-16 flex flex-col items-center gap-1 group active:scale-95 transition-transform"
+               >
+                 <div className="relative p-3 rounded-full bg-white/5 border border-white/10 text-neutral-400 group-hover:bg-white/10 group-hover:text-white transition-colors">
+                    {/* Dynamic Icon: Show a preview if photos exist, otherwise generic icon */}
+                    {photos.length > 0 ? (
+                        <div className="w-5 h-5 rounded-sm overflow-hidden border border-white/50">
+                            {photos[0].type === 'video' ? <Video size={18} /> : <img src={photos[0].imageUrl} className="w-full h-full object-cover opacity-80" />}
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <Images size={20} strokeWidth={2} />
+                        </div>
+                    )}
+                    {/* Red Notification Dot */}
+                    {photos.length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#1a1a1a]"></span>}
+                 </div>
+                 <span className="text-[9px] font-bold tracking-wider text-neutral-500 group-hover:text-neutral-300">PRINTS</span>
+              </button>
             </div>
           </div>
         </div>
 
         {/* --- DARKROOM GALLERY --- */}
-        {/* CHANGE: Added overflow-y-auto to allow scrolling within this container only */}
         <div className={`${activeTab === 'gallery' ? 'block' : 'hidden md:block'} w-full md:w-[500px] shrink-0 min-h-[500px] h-full overflow-y-auto px-2`}>
+           
+           {/* NEW: MOBILE HEADER WITH BACK BUTTON */}
+           <div className="md:hidden flex items-center justify-between mb-4 pt-2">
+                <button 
+                    onClick={() => setActiveTab('camera')}
+                    className="flex items-center gap-2 text-white bg-white/10 px-4 py-2 rounded-full text-xs font-bold active:scale-95 transition-all"
+                >
+                    <ChevronLeft size={16} /> BACK TO CAMERA
+                </button>
+                <h2 className="text-sm font-black text-neutral-500 tracking-widest uppercase">Darkroom</h2>
+           </div>
            
            {/* Drive Link Box */}
            {driveLink && (
@@ -897,7 +938,7 @@ const RetroCamera = ({ eventId = null }) => {
               <span className="text-xs font-mono text-neutral-400 bg-neutral-800 px-2 py-1 rounded">{photos.length} ITEMS</span>
            </div>
            
-           <div className="grid grid-cols-2 gap-3 pb-32">
+           <div className="grid grid-cols-2 gap-3 pb-32 items-start">
             {photos.length === 0 && <div className="col-span-2 flex flex-col items-center justify-center text-neutral-700 gap-4 py-20 opacity-50"><Images size={48} strokeWidth={1} /><p className="text-sm font-mono">No photos yet.</p></div>}
             
             {photos.map((photo) => {
@@ -932,30 +973,6 @@ const RetroCamera = ({ eventId = null }) => {
             )})}
            </div>
         </div>
-      </div>
-
-      {/* --- MOBILE BOTTOM NAVIGATION (Visible only on Mobile) --- */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-neutral-900 border-t border-white/10 p-4 pb-8 z-40 flex justify-around items-center safe-area-bottom">
-          <button 
-            onClick={() => setActiveTab('camera')} 
-            className={`flex flex-col items-center gap-1 ${activeTab === 'camera' ? 'text-white' : 'text-neutral-500'}`}
-          >
-              <Camera size={24} strokeWidth={activeTab === 'camera' ? 2.5 : 1.5} />
-              <span className="text-[10px] font-bold tracking-widest">CAMERA</span>
-          </button>
-          
-          <div className="w-px h-8 bg-white/10"></div>
-
-          <button 
-            onClick={() => setActiveTab('gallery')} 
-            className={`relative flex flex-col items-center gap-1 ${activeTab === 'gallery' ? 'text-white' : 'text-neutral-500'}`}
-          >
-              <div className="relative">
-                <Images size={24} strokeWidth={activeTab === 'gallery' ? 2.5 : 1.5} />
-                {photos.length > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-neutral-900"></span>}
-              </div>
-              <span className="text-[10px] font-bold tracking-widest">PRINTS</span>
-          </button>
       </div>
 
       {/* --- FLOATING BATCH ACTION BAR --- */}
