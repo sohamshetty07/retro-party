@@ -731,7 +731,6 @@ const RetroCamera = ({ eventId = null }) => {
   };
 
   return (
-    // CHANGE 1: Added 'justify-center' to center the camera vertically in the black space
     <div className="h-[100dvh] bg-neutral-900 flex flex-col items-center justify-center font-mono select-none overflow-hidden relative touch-none">
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -750,35 +749,29 @@ const RetroCamera = ({ eventId = null }) => {
       </div>
 
       {/* --- HEADER --- */}
-      {/* CHANGE 2: Removed fixed margins, let Flexbox handle spacing */}
-      <div className="w-full max-w-md md:max-w-6xl flex justify-between items-center p-4 z-20 shrink-0 absolute top-0 left-0 right-0 mx-auto">
-         <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter italic">RETRO<span className="text-red-500">CAM</span></h1>
-         <div className="flex gap-2 text-[10px] md:text-xs font-bold text-neutral-500">
+      <div className="w-full max-w-md md:max-w-6xl flex justify-between items-center p-4 z-20 shrink-0 absolute top-0 left-0 right-0 mx-auto pointer-events-none">
+         {/* Logo is now pointer-events-auto so you can click hidden things if needed, but mostly static */}
+         <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter italic drop-shadow-lg pointer-events-auto">RETRO<span className="text-red-500">CAM</span></h1>
+         <div className="flex gap-2 text-[10px] md:text-xs font-bold text-neutral-500 pointer-events-auto">
              {eventId && <span className="bg-red-600 text-white px-2 py-1 rounded animate-pulse shadow-red-900/50 shadow-lg">LIVE EVENT</span>}
              <button onClick={toggleFullscreen} className="hover:text-white transition-colors flex items-center gap-1 hidden md:flex"><Maximize2 size={14} /> FULLSCREEN</button>
          </div>
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      {/* CHANGE 3: Centered everything. Removed padding on mobile to maximize width. */}
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 w-full h-full max-w-7xl">
         
         {/* --- CAMERA BODY --- */}
-        {/* CHANGE 4: Removed side padding (px-0) on mobile so the square can be as wide (and tall) as possible */}
-        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col gap-0 md:gap-6 z-10 shrink-0`}>
+        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col gap-0 md:gap-6 z-10 shrink-0 h-full md:h-auto`}>
           
-          {/* Decorative Background (Desktop Only) */}
-          <div className="hidden md:block absolute inset-0 rounded-[3rem] pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
-          
-          {/* Top Info Bar (Desktop Only - Mobile hides this to save space for viewfinder) */}
+          {/* Top Info Bar (Desktop Only) */}
           <div className="hidden md:flex justify-between items-center text-neutral-400 px-8 pt-6 shrink-0">
             <div className="flex items-center gap-2 text-neutral-300"><Camera size={18} /><span className="text-xs tracking-[0.2em] font-black">POLAROID-3000</span></div>
             <div className="flex items-center gap-3"><Battery size={18} className="text-green-500" /></div>
           </div>
 
           {/* Viewfinder */}
-          {/* CHANGE 5: Maximized Viewfinder. It now touches edges on mobile for maximum size. */}
-          <div className="relative w-full aspect-square bg-black md:rounded-xl overflow-hidden border-y-4 md:border-8 border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform" onClick={handleFocus}>
+          <div className="relative w-full aspect-square bg-black md:rounded-xl overflow-hidden border-b-4 md:border-8 border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform shrink-0" onClick={handleFocus}>
             {error ? <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-3 text-center p-4"><AlertCircle size={32} className="text-red-500" /><p className="text-xs">{error}</p></div> : 
               <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
                  <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`} 
@@ -788,7 +781,7 @@ const RetroCamera = ({ eventId = null }) => {
               </div>
             }
             
-            {/* ... Overlays ... */}
+            {/* Overlays */}
             <div className="absolute inset-0 pointer-events-none transition-colors duration-300" style={{ backgroundColor: FILTER_TYPES[filterMode]?.overlayColor || 'transparent', mixBlendMode: FILTER_TYPES[filterMode]?.overlayBlend || 'normal' }} />
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.6)_100%)] pointer-events-none z-10"></div>
             <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.2)_50%)] bg-[length:100%_4px] pointer-events-none z-10 opacity-100"></div>
@@ -799,7 +792,8 @@ const RetroCamera = ({ eventId = null }) => {
             
             <div className="absolute inset-0 p-4 z-20 flex flex-col justify-between opacity-70 pointer-events-none">
               <div className="flex justify-between text-[10px] font-bold text-white/80 font-mono">
-                  <span>{isRecording ? formatTime(recordingTime) : `${timerDuration}s TIMER`}</span>
+                  {/* FIX 1: Removed Timer text here, keeping only Recording state */}
+                  <span>{isRecording ? formatTime(recordingTime) : ''}</span>
                   <span>{mode === 'video' ? 'VIDEO' : (isBoothMode ? 'BOOTH' : 'SINGLE')}</span>
               </div>
               <div className="flex justify-between items-end text-[10px] font-bold text-white/80 uppercase"><span className="bg-black/40 px-2 py-1 rounded backdrop-blur-md">{FILTER_TYPES[filterMode]?.name}</span><span className="text-lg text-yellow-500 font-digital tracking-widest">{shutterCount.toString().padStart(3, '0')}</span></div>
@@ -807,25 +801,33 @@ const RetroCamera = ({ eventId = null }) => {
           </div>
 
           {/* Controls Area */}
-          <div className="bg-[#1a1a1a] md:rounded-b-[3rem] p-4 pb-8 md:p-8 md:pt-0 shadow-inner flex flex-col gap-4 shrink-0">
+          <div className="flex-1 bg-[#1a1a1a] md:rounded-b-[3rem] p-4 pb-8 md:p-8 md:pt-0 shadow-inner flex flex-col justify-between md:gap-4 overflow-hidden">
             
-            {/* Filter Scroller */}
-            <div className="relative group">
-                <button onClick={() => scrollFilters('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-r-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronLeft size={16} /></button>
-                <div ref={scrollContainerRef} className="flex gap-2 overflow-x-auto pb-4 pt-2 scrollbar-hide snap-x px-1">
-                {visibleFilters.map(([key, config]) => (
-                    <button key={key} onClick={() => setFilterMode(key)} className={`flex-shrink-0 p-2 rounded-xl flex flex-col items-center gap-1 transition-all active:scale-95 snap-start min-w-[4.5rem] border relative overflow-hidden ${filterMode===key?'bg-[#252525] text-white border-white/20 shadow-lg ring-1 ring-white/10':'bg-[#222] text-neutral-600 border-transparent'}`}>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neutral-700 to-neutral-800 flex items-center justify-center shadow-inner"><span className="text-[8px] font-black opacity-30">{key.slice(0, 2).toUpperCase()}</span></div>
-                    <span className="text-[8px] font-bold whitespace-nowrap z-10 relative">{config.name}</span>
-                    {filterMode === key && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-red-500"></div>}
-                    </button>
-                ))}
+            {/* Top Control Section: Categories & Filters */}
+            <div className="flex flex-col gap-3 shrink-0">
+                {/* FIX 2: Category Pills - Added 'shrink-0' and explicit height to prevent crushing */}
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide text-[10px] font-bold shrink-0 min-h-[28px]">
+                    {categories.map(cat => (<button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-full border transition-all whitespace-nowrap ${selectedCategory===cat?'bg-neutral-200 text-black border-neutral-200':'bg-transparent text-neutral-500 border-neutral-700 hover:border-neutral-500'}`}>{cat}</button>))}
                 </div>
-                <button onClick={() => scrollFilters('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-l-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronRight size={16} /></button>
+
+                {/* Filter Scroller */}
+                <div className="relative group shrink-0">
+                    <button onClick={() => scrollFilters('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-r-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronLeft size={16} /></button>
+                    <div ref={scrollContainerRef} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x px-1">
+                    {visibleFilters.map(([key, config]) => (
+                        <button key={key} onClick={() => setFilterMode(key)} className={`flex-shrink-0 p-2 rounded-xl flex flex-col items-center gap-1 transition-all active:scale-95 snap-start min-w-[4.5rem] border relative overflow-hidden ${filterMode===key?'bg-[#252525] text-white border-white/20 shadow-lg ring-1 ring-white/10':'bg-[#222] text-neutral-600 border-transparent'}`}>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neutral-700 to-neutral-800 flex items-center justify-center shadow-inner"><span className="text-[8px] font-black opacity-30">{key.slice(0, 2).toUpperCase()}</span></div>
+                        <span className="text-[8px] font-bold whitespace-nowrap z-10 relative">{config.name}</span>
+                        {filterMode === key && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-red-500"></div>}
+                        </button>
+                    ))}
+                    </div>
+                    <button onClick={() => scrollFilters('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-l-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronRight size={16} /></button>
+                </div>
             </div>
 
-            {/* Utility Row (Timer, Flash, Flip) */}
-            <div className="flex justify-center items-center gap-6 border-t border-white/5 pt-4">
+            {/* Middle Utility Row */}
+            <div className="flex justify-center items-center gap-6 border-t border-white/5 pt-2 md:pt-4 shrink-0">
                  <button onClick={() => setTimerDuration(p => p===0?3:p===3?10:0)} className={`p-3 rounded-full transition-all flex items-center gap-1 ${timerDuration>0?'bg-yellow-500 text-black':'bg-white/5 text-neutral-500'}`}>
                     <Timer size={16} />{timerDuration>0 && <span className="text-[10px] font-bold">{timerDuration}s</span>}
                  </button>
@@ -839,11 +841,12 @@ const RetroCamera = ({ eventId = null }) => {
                  <button onClick={() => setFacingMode(p => p==='user'?'environment':'user')} className="p-3 rounded-full bg-white/5 text-neutral-500 hover:text-white"><RotateCcw size={16} /></button>
             </div>
 
-            {/* New Pro Camera Bottom Bar */}
-            <div className="flex justify-between items-center px-4 pt-2">
+            {/* Bottom Actions Row */}
+            {/* FIX 4: Safe area handling - Adjusted padding to sit nicely above home bar */}
+            <div className="flex justify-between items-end px-4 pt-2 md:pb-0 safe-area-bottom shrink-0">
                
                {/* LEFT: BOOTH MODE */}
-               <button onClick={() => setIsBoothMode(!isBoothMode)} className="w-16 flex flex-col items-center gap-1 group active:scale-95 transition-transform">
+               <button onClick={() => setIsBoothMode(!isBoothMode)} className="w-16 flex flex-col items-center gap-1 group active:scale-95 transition-transform pb-1">
                  <div className={`p-3 rounded-full border transition-all ${isBoothMode ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-transparent border-transparent text-neutral-500'}`}>
                     <Images size={24} strokeWidth={1.5} />
                  </div>
@@ -858,7 +861,7 @@ const RetroCamera = ({ eventId = null }) => {
               </button>
 
               {/* RIGHT: GALLERY */}
-              <button onClick={() => setActiveTab('gallery')} className="w-16 flex flex-col items-center gap-1 group active:scale-95 transition-transform">
+              <button onClick={() => setActiveTab('gallery')} className="w-16 flex flex-col items-center gap-1 group active:scale-95 transition-transform pb-1">
                  <div className="relative p-3 rounded-full text-neutral-500 group-hover:text-white transition-colors">
                     {photos.length > 0 ? (
                         <div className="w-6 h-6 rounded-md overflow-hidden border border-white/50 ring-2 ring-black">
@@ -876,7 +879,6 @@ const RetroCamera = ({ eventId = null }) => {
         </div>
 
         {/* --- DARKROOM GALLERY --- */}
-        {/* CHANGE 6: Cleaned up scrolling. 'scrollbar-hide' and 'pb-24' only. No double scrollbars. */}
         <div className={`${activeTab === 'gallery' ? 'block' : 'hidden md:block'} w-full md:w-[500px] shrink-0 h-full overflow-y-auto scrollbar-hide px-4 md:px-2 pt-20 md:pt-0 pb-24`}>
            
            {/* MOBILE BACK BUTTON */}
@@ -907,7 +909,6 @@ const RetroCamera = ({ eventId = null }) => {
               <span className="text-xs font-mono text-neutral-400 bg-neutral-800 px-2 py-1 rounded">{photos.length} ITEMS</span>
            </div>
            
-           {/* CHANGE 7: Added 'items-start' to fix the stretching bug you saw earlier */}
            <div className="grid grid-cols-2 gap-3 items-start">
             {photos.length === 0 && <div className="col-span-2 flex flex-col items-center justify-center text-neutral-700 gap-4 py-20 opacity-50"><Images size={48} strokeWidth={1} /><p className="text-sm font-mono">No photos yet.</p></div>}
             
@@ -945,8 +946,8 @@ const RetroCamera = ({ eventId = null }) => {
         </div>
       </div>
       
-      {/* Floating Batch Action Bar (Kept this, but removed the old Bottom Nav) */}
-      {selectedPhotos.size > 0 && (
+      {/* FIX 3: Batch Action Bar - Only shows when in Gallery mode AND items are selected */}
+      {selectedPhotos.size > 0 && activeTab === 'gallery' && (
           <div className="fixed bottom-6 left-0 right-0 mx-auto bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] flex items-center gap-3 animate-bounce-in border border-white/20 w-[90%] max-w-sm justify-between">
               <span className="font-bold text-sm whitespace-nowrap">{selectedPhotos.size} <span className="hidden sm:inline">Selected</span></span>
               <div className="flex items-center gap-3">
