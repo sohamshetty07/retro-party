@@ -392,33 +392,83 @@ const RetroCamera = ({ eventId = null }) => {
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
 
-  // --- DRAWING ---
+  // --- DRAWING HELPER (Updated for Square Crop) ---
   const drawFrame = (video, canvas, ctx, filterKey) => {
-    const config = FILTER_TYPES[filterKey] || FILTER_TYPES.sepia;
+    const config = FILTER_TYPES[filterKey] || FILTER_TYPES.normal;
     const { width, height } = canvas;
+
+    // 1. Calculate Center Crop (Object-Cover Logic)
+    const vW = video.videoWidth;
+    const vH = video.videoHeight;
+    const videoAspect = vW / vH;
+    const canvasAspect = width / height;
+    
+    let sx, sy, sWidth, sHeight;
+
+    if (canvasAspect > videoAspect) {
+        // Canvas is wider than video (crop top/bottom)
+        sWidth = vW;
+        sHeight = vW / canvasAspect;
+        sx = 0;
+        sy = (vH - sHeight) / 2;
+    } else {
+        // Video is wider than canvas (crop sides)
+        sHeight = vH;
+        sWidth = vH * canvasAspect;
+        sx = (vW - sWidth) / 2;
+        sy = 0;
+    }
+
+    // 2. Apply Filters
     ctx.filter = getFilterString(config);
-    if (facingMode === 'user') { ctx.translate(width, 0); ctx.scale(-1, 1); }
-    ctx.drawImage(video, 0, 0, width, height);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // 3. Handle Mirroring (Selfie Mode)
+    ctx.save();
+    if (facingMode === 'user') { 
+        ctx.translate(width, 0); 
+        ctx.scale(-1, 1); 
+    }
+
+    // 4. Draw the Cropped Image
+    ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, width, height);
+    
+    ctx.restore(); // Restore mirroring state
     ctx.filter = 'none'; 
+
+    // 5. Apply Overlays (Grayscale, Glitch, etc.)
+    // Note: We use globalCompositeOperation which applies to the whole canvas
     if (config.grayscale === 1) { ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, width, height); ctx.restore(); }
     if (config.invert === 1) { ctx.save(); ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, width, height); ctx.restore(); }
     if (config.glitch) { 
+        // Simple Glitch effect
         ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
-        if (facingMode === 'user') { ctx.translate(width, 0); ctx.scale(-1, 1); } ctx.drawImage(video, 5, 0, width, height); ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; if (facingMode === 'user') { ctx.translate(width, 0); ctx.scale(-1, 1); } ctx.drawImage(video, -5, 0, width, height); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.restore();
+        if (facingMode === 'user') { ctx.translate(width, 0); ctx.scale(-1, 1); } 
+        ctx.drawImage(video, sx+5, sy, sWidth, sHeight, 5, 0, width, height); 
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; 
+        if (facingMode === 'user') { ctx.translate(width, 0); ctx.scale(-1, 1); } 
+        ctx.drawImage(video, sx-5, sy, sWidth, sHeight, -5, 0, width, height); 
+        ctx.restore();
     }
+    
     if (config.overlayColor) { ctx.save(); ctx.globalCompositeOperation = config.overlayBlend; ctx.fillStyle = config.overlayColor; ctx.fillRect(0, 0, width, height); ctx.restore(); }
+    
     // Scanlines
     ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.fillStyle = 'rgba(0,0,0,0.2)'; for(let i=0; i<height; i+=4) ctx.fillRect(0, i, width, 2); ctx.restore();
+    
     // Vignette
     ctx.save(); ctx.globalCompositeOperation = 'multiply'; const grad = ctx.createRadialGradient(width/2, height/2, height/3, width/2, height/2, height); grad.addColorStop(0, 'transparent'); grad.addColorStop(1, 'rgba(0,0,0,0.6)'); ctx.fillStyle = grad; ctx.fillRect(0, 0, width, height); ctx.restore();
   };
 
   const getShotCanvas = (video, filterKey) => {
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Determine the size based on the smallest dimension of the camera
+    // This ensures high-res square output
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    
+    canvas.width = size;
+    canvas.height = size; // <--- FORCE SQUARE
+    
     const ctx = canvas.getContext('2d');
     drawFrame(video, canvas, ctx, filterKey);
     return canvas;
@@ -681,7 +731,8 @@ const RetroCamera = ({ eventId = null }) => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-neutral-900 flex flex-col items-center py-4 px-2 font-mono select-none overflow-x-hidden">
+    // CHANGE: Locked height to 100dvh and disabled scrolling on root
+    <div className="h-[100dvh] bg-neutral-900 flex flex-col items-center pt-4 pb-20 md:pb-4 px-2 font-mono select-none overflow-hidden relative touch-none">
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -699,7 +750,8 @@ const RetroCamera = ({ eventId = null }) => {
       </div>
 
       {/* --- HEADER --- */}
-      <div className="w-full max-w-6xl flex justify-between items-center mb-4 px-2 z-20">
+      {/* CHANGE: Added shrink-0 and reduced bottom margin */}
+      <div className="w-full max-w-6xl flex justify-between items-center mb-2 px-2 z-20 shrink-0">
          <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter italic">RETRO<span className="text-red-500">CAM</span></h1>
          <div className="flex gap-2 text-[10px] md:text-xs font-bold text-neutral-500">
              {eventId && <span className="bg-red-600 text-white px-2 py-1 rounded animate-pulse shadow-red-900/50 shadow-lg">LIVE EVENT</span>}
@@ -708,29 +760,35 @@ const RetroCamera = ({ eventId = null }) => {
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 w-full max-w-7xl pb-24 md:pb-0">
+      {/* CHANGE: Added flex-1 and min-h-0 to allow proper vertical scaling */}
+      <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-4 md:gap-8 w-full max-w-7xl flex-1 min-h-0">
         
-        {/* --- CAMERA BODY (Hidden on mobile if tab is 'gallery') --- */}
-        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full max-w-[500px] bg-[#1e1e1e] rounded-[2rem] md:rounded-[3rem] shadow-2xl border-t border-white/10 p-4 md:p-8 flex-col gap-4 md:gap-6 z-10 shrink-0`}>
-          <div className="absolute inset-0 rounded-[2rem] pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+        {/* --- CAMERA BODY --- */}
+        {/* CHANGE: Added max-h-full to prevent overflow and adjusted padding/gap for tighter mobile fit */}
+        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full max-w-[500px] h-full md:h-auto max-h-full bg-[#1e1e1e] rounded-2xl md:rounded-[3rem] shadow-2xl border-t border-white/10 p-3 md:p-8 flex-col gap-2 md:gap-6 z-10`}>
+          <div className="absolute inset-0 rounded-2xl md:rounded-[3rem] pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
           
           {/* Top Info Bar */}
-          <div className="flex justify-between items-center text-neutral-400 px-2">
+          <div className="flex justify-between items-center text-neutral-400 px-2 shrink-0">
             <div className="flex items-center gap-2 text-neutral-300"><Camera size={18} /><span className="text-xs tracking-[0.2em] font-black">POLAROID-3000</span></div>
             <div className="flex items-center gap-3"><div className={`flex items-center gap-2 px-2 py-1 rounded-full bg-black/40 border border-white/5`}><div className={`w-1.5 h-1.5 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-neutral-600'}`}></div><span className="text-[9px] font-bold text-neutral-400">{isRecording ? 'REC' : 'ON'}</span></div><Battery size={18} className="text-green-500" /></div>
           </div>
 
           {/* Viewfinder */}
-          <div className="relative w-full aspect-[4/3] bg-black rounded-xl overflow-hidden border-4 md:border-[8px] border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform" onClick={handleFocus}>
+          {/* CHANGE: Added 'aspect-square' and 'max-h' constraints */}
+          <div className="relative aspect-square w-full max-h-[50vh] md:max-h-[60vh] bg-black rounded-xl overflow-hidden border-4 md:border-[8px] border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform" onClick={handleFocus}>
             {error ? <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-3 text-center p-4"><AlertCircle size={32} className="text-red-500" /><p className="text-xs">{error}</p></div> : 
-              <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
+              <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
+                 {/* CHANGE: 'object-cover' ensures the video fills the square (cropping visually) */}
                  <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`} 
                  style={{ filter: getFilterString(FILTER_TYPES[filterMode]) }} />
+                 
                  {FILTER_TYPES[filterMode]?.glitch && <div className="absolute inset-0 opacity-50 pointer-events-none mix-blend-screen bg-fuchsia-500/10 translate-x-[-2px]"></div>}
                  {FILTER_TYPES[filterMode]?.invert && <div className="absolute inset-0 bg-white mix-blend-difference pointer-events-none"></div>}
               </div>
             }
             
+            {/* ... (The rest of the overlays: focus point, countdown, flash, timer UI remain exactly the same) ... */}
             <div className="absolute inset-0 pointer-events-none transition-colors duration-300" style={{ backgroundColor: FILTER_TYPES[filterMode]?.overlayColor || 'transparent', mixBlendMode: FILTER_TYPES[filterMode]?.overlayBlend || 'normal' }} />
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.6)_100%)] pointer-events-none z-10"></div>
             <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.2)_50%)] bg-[length:100%_4px] pointer-events-none z-10 opacity-100"></div>
@@ -749,7 +807,8 @@ const RetroCamera = ({ eventId = null }) => {
           </div>
 
           {/* Controls Area */}
-          <div className="bg-[#1a1a1a] rounded-2xl p-4 shadow-inner border-b border-white/5 flex flex-col gap-4">
+          {/* CHANGE: Added shrink-0 so buttons never disappear */}
+          <div className="bg-[#1a1a1a] rounded-2xl p-3 md:p-4 shadow-inner border-b border-white/5 flex flex-col gap-3 md:gap-4 shrink-0">
             <div className="flex justify-between items-center border-b border-white/5 pb-2">
                 <div className="flex gap-1 bg-black/20 p-1 rounded-lg">
                     <button onClick={() => setMode('photo')} className={`p-2 rounded-md transition-all ${mode==='photo'?'bg-white/20 text-white shadow-sm':'text-neutral-500'}`}><Camera size={14} /></button>
@@ -763,11 +822,11 @@ const RetroCamera = ({ eventId = null }) => {
                                 <Timer size={14} />{timerDuration>0 && `${timerDuration}s`}
                             </button>
                             
-                            {/* BOOTH BUTTON (The new part!) */}
+                            {/* BOOTH BUTTON */}
                             <button onClick={() => setIsBoothMode(!isBoothMode)} className={`p-2 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isBoothMode?'bg-purple-500/20 text-purple-400':'text-neutral-500 hover:text-white'}`}>
                                 <Images size={14} />
                             </button>
-                             {/* --- NEW: FLASH/TORCH BUTTON --- */}
+                             {/* FLASH/TORCH BUTTON */}
                              {supportsTorch && (
                               <button
                                 onClick={toggleTorch}
@@ -779,7 +838,7 @@ const RetroCamera = ({ eventId = null }) => {
                         </>
                     )}
 
-                    {/* EXISTING ROTATE BUTTON */}
+                    {/* ROTATE BUTTON */}
                     <button onClick={() => setFacingMode(p => p==='user'?'environment':'user')} className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-white/10"><RotateCcw size={14} /></button>
                 </div>
             </div>
@@ -814,8 +873,9 @@ const RetroCamera = ({ eventId = null }) => {
           </div>
         </div>
 
-        {/* --- DARKROOM GALLERY (Hidden on mobile if tab is 'camera') --- */}
-        <div className={`${activeTab === 'gallery' ? 'block' : 'hidden md:block'} w-full md:w-[500px] shrink-0 min-h-[500px] px-2`}>
+        {/* --- DARKROOM GALLERY --- */}
+        {/* CHANGE: Added overflow-y-auto to allow scrolling within this container only */}
+        <div className={`${activeTab === 'gallery' ? 'block' : 'hidden md:block'} w-full md:w-[500px] shrink-0 min-h-[500px] h-full overflow-y-auto px-2`}>
            
            {/* Drive Link Box */}
            {driveLink && (
