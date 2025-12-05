@@ -749,8 +749,8 @@ const RetroCamera = ({ eventId = null }) => {
       </div>
 
       {/* --- HEADER --- */}
-      <div className="w-full max-w-md md:max-w-6xl flex justify-between items-center p-4 z-20 shrink-0 absolute top-0 left-0 right-0 mx-auto pointer-events-none">
-         {/* Logo is now pointer-events-auto so you can click hidden things if needed, but mostly static */}
+      {/* FIX 1: Changed 'absolute' to 'md:relative' and max-width to match content */}
+      <div className="w-full max-w-7xl flex justify-between items-center p-4 z-20 shrink-0 absolute md:relative top-0 left-0 right-0 mx-auto pointer-events-none">
          <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter italic drop-shadow-lg pointer-events-auto">RETRO<span className="text-red-500">CAM</span></h1>
          <div className="flex gap-2 text-[10px] md:text-xs font-bold text-neutral-500 pointer-events-auto">
              {eventId && <span className="bg-red-600 text-white px-2 py-1 rounded animate-pulse shadow-red-900/50 shadow-lg">LIVE EVENT</span>}
@@ -759,10 +759,10 @@ const RetroCamera = ({ eventId = null }) => {
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4 w-full h-full max-w-7xl">
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4 w-full h-full max-w-7xl min-h-0">
         
         {/* --- CAMERA BODY --- */}
-        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col gap-0 md:gap-6 z-10 shrink-0 h-full md:h-auto`}>
+        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col gap-0 md:gap-6 z-10 shrink-0 h-full md:h-auto max-h-full`}>
           
           {/* Top Info Bar (Desktop Only) */}
           <div className="hidden md:flex justify-between items-center text-neutral-400 px-8 pt-6 shrink-0">
@@ -792,7 +792,6 @@ const RetroCamera = ({ eventId = null }) => {
             
             <div className="absolute inset-0 p-4 z-20 flex flex-col justify-between opacity-70 pointer-events-none">
               <div className="flex justify-between text-[10px] font-bold text-white/80 font-mono">
-                  {/* FIX 1: Removed Timer text here, keeping only Recording state */}
                   <span>{isRecording ? formatTime(recordingTime) : ''}</span>
                   <span>{mode === 'video' ? 'VIDEO' : (isBoothMode ? 'BOOTH' : 'SINGLE')}</span>
               </div>
@@ -805,12 +804,10 @@ const RetroCamera = ({ eventId = null }) => {
             
             {/* Top Control Section: Categories & Filters */}
             <div className="flex flex-col gap-3 shrink-0">
-                {/* FIX 2: Category Pills - Added 'shrink-0' and explicit height to prevent crushing */}
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide text-[10px] font-bold shrink-0 min-h-[28px]">
                     {categories.map(cat => (<button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-full border transition-all whitespace-nowrap ${selectedCategory===cat?'bg-neutral-200 text-black border-neutral-200':'bg-transparent text-neutral-500 border-neutral-700 hover:border-neutral-500'}`}>{cat}</button>))}
                 </div>
 
-                {/* Filter Scroller */}
                 <div className="relative group shrink-0">
                     <button onClick={() => scrollFilters('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 p-2 rounded-r-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"><ChevronLeft size={16} /></button>
                     <div ref={scrollContainerRef} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x px-1">
@@ -842,7 +839,6 @@ const RetroCamera = ({ eventId = null }) => {
             </div>
 
             {/* Bottom Actions Row */}
-            {/* FIX 4: Safe area handling - Adjusted padding to sit nicely above home bar */}
             <div className="flex justify-between items-end px-4 pt-2 md:pb-0 safe-area-bottom shrink-0">
                
                {/* LEFT: BOOTH MODE */}
@@ -929,10 +925,8 @@ const RetroCamera = ({ eventId = null }) => {
                             <div className="absolute top-2 right-2 z-20">
                                 {isSelected ? <CheckCircle2 className="text-blue-500 bg-white rounded-full" size={18} /> : <Circle className="text-white/50 drop-shadow-md" size={18} />}
                             </div>
-
-                            <button onClick={(e) => saveToDevice(e, photo)} className="absolute bottom-2 right-2 p-1.5 bg-black/40 backdrop-blur-sm text-white rounded-full z-20" title="Save">
-                                <Download size={12} />
-                            </button>
+                            
+                            {/* FIX 2: Deleted redundant individual download button */}
                         </div>
                         <div className="mt-2 px-1 relative">
                              <div className="relative group/edit">
@@ -946,9 +940,9 @@ const RetroCamera = ({ eventId = null }) => {
         </div>
       </div>
       
-      {/* FIX 3: Batch Action Bar - Only shows when in Gallery mode AND items are selected */}
-      {selectedPhotos.size > 0 && activeTab === 'gallery' && (
-          <div className="fixed bottom-6 left-0 right-0 mx-auto bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] flex items-center gap-3 animate-bounce-in border border-white/20 w-[90%] max-w-sm justify-between">
+      {/* FIX 3: Batch Action Bar Logic - Hidden ONLY on mobile when viewing camera. Visible on Desktop even if state is camera. */}
+      {selectedPhotos.size > 0 && (
+          <div className={`fixed bottom-6 left-0 right-0 mx-auto bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] items-center gap-3 animate-bounce-in border border-white/20 w-[90%] max-w-sm justify-between ${activeTab === 'camera' ? 'hidden md:flex' : 'flex'}`}>
               <span className="font-bold text-sm whitespace-nowrap">{selectedPhotos.size} <span className="hidden sm:inline">Selected</span></span>
               <div className="flex items-center gap-3">
                 <button onClick={async () => {
