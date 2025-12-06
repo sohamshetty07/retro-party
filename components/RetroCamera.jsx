@@ -761,7 +761,8 @@ const RetroCamera = ({ eventId = null }) => {
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 w-full h-full max-w-7xl min-h-0">
         
         {/* --- CAMERA BODY --- */}
-        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col gap-0 md:gap-6 z-10 shrink-0 h-full md:h-auto max-h-full justify-center md:justify-start`}>
+        {/* FIX 1: Added 'md:max-h-[90vh]' to ensure the camera body NEVER exceeds screen height on laptop */}
+        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col gap-0 md:gap-4 z-10 shrink-0 h-full md:h-auto max-h-full md:max-h-[90vh] justify-center md:justify-start`}>
           
           {/* Top Info Bar (Desktop Only) */}
           <div className="hidden md:flex justify-between items-center text-neutral-400 px-8 pt-6 pb-2 shrink-0">
@@ -770,8 +771,8 @@ const RetroCamera = ({ eventId = null }) => {
           </div>
 
           {/* Viewfinder */}
-          {/* FIX APPLIED: Added 'md:h-[55vh]' to explicitly force height on laptop, preventing collapse. */}
-          <div className="relative w-full md:w-auto aspect-square max-h-[52vh] md:h-[55vh] bg-black md:rounded-xl overflow-hidden border-b-4 md:border-8 border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform shrink-0 mx-auto" onClick={handleFocus}>
+          {/* FIX 2: Reduced Laptop height to 'md:h-[45vh]'. This creates space for the buttons below. */}
+          <div className="relative w-full md:w-auto aspect-square max-h-[52vh] md:h-[45vh] bg-black md:rounded-xl overflow-hidden border-b-4 md:border-8 border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform shrink-0 mx-auto" onClick={handleFocus}>
             {error ? <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-3 text-center p-4"><AlertCircle size={32} className="text-red-500" /><p className="text-xs">{error}</p></div> : 
               <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
                  <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`} 
@@ -802,7 +803,7 @@ const RetroCamera = ({ eventId = null }) => {
           {/* Controls Area */}
           <div className="flex-1 bg-[#1a1a1a] md:rounded-b-[3rem] p-4 pb-8 md:p-8 md:pt-0 shadow-inner flex flex-col justify-end md:justify-between md:gap-4 overflow-hidden min-h-0">
             
-            {/* Top Control Section: Categories & Filters */}
+            {/* Top Control Section */}
             <div className="flex flex-col gap-2 shrink-0 mb-auto md:mb-0 pt-4 md:pt-0">
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide text-[10px] font-bold shrink-0 min-h-[28px]">
                     {categories.map(cat => (<button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-full border transition-all whitespace-nowrap ${selectedCategory===cat?'bg-neutral-200 text-black border-neutral-200':'bg-transparent text-neutral-500 border-neutral-700 hover:border-neutral-500'}`}>{cat}</button>))}
