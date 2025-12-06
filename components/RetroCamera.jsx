@@ -749,8 +749,8 @@ const RetroCamera = ({ eventId = null }) => {
       </div>
 
       {/* --- HEADER --- */}
-      {/* FIX 1: Changed 'absolute' to 'md:relative' and max-width to match content */}
-      <div className="w-full max-w-7xl flex justify-between items-center p-4 z-20 shrink-0 absolute md:relative top-0 left-0 right-0 mx-auto pointer-events-none">
+      {/* Changed to py-2 to save vertical space */}
+      <div className="w-full max-w-7xl flex justify-between items-center px-4 py-2 z-20 shrink-0 absolute md:relative top-0 left-0 right-0 mx-auto pointer-events-none">
          <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter italic drop-shadow-lg pointer-events-auto">RETRO<span className="text-red-500">CAM</span></h1>
          <div className="flex gap-2 text-[10px] md:text-xs font-bold text-neutral-500 pointer-events-auto">
              {eventId && <span className="bg-red-600 text-white px-2 py-1 rounded animate-pulse shadow-red-900/50 shadow-lg">LIVE EVENT</span>}
@@ -762,16 +762,18 @@ const RetroCamera = ({ eventId = null }) => {
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 w-full h-full max-w-7xl min-h-0">
         
         {/* --- CAMERA BODY --- */}
-        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col gap-0 md:gap-6 z-10 shrink-0 h-full md:h-auto max-h-full`}>
+        {/* Added justify-center to center content vertically within the body */}
+        <div className={`${activeTab === 'camera' ? 'flex' : 'hidden md:flex'} relative w-full md:w-auto max-w-md bg-[#1e1e1e] md:rounded-[3rem] shadow-2xl md:border-t border-white/10 flex-col z-10 shrink-0 h-full md:h-auto max-h-full justify-center md:justify-start`}>
           
           {/* Top Info Bar (Desktop Only) */}
-          <div className="hidden md:flex justify-between items-center text-neutral-400 px-8 pt-6 shrink-0">
+          <div className="hidden md:flex justify-between items-center text-neutral-400 px-8 pt-6 pb-2 shrink-0">
             <div className="flex items-center gap-2 text-neutral-300"><Camera size={18} /><span className="text-xs tracking-[0.2em] font-black">POLAROID-3000</span></div>
             <div className="flex items-center gap-3"><Battery size={18} className="text-green-500" /></div>
           </div>
 
           {/* Viewfinder */}
-          <div className="relative w-full aspect-square bg-black md:rounded-xl overflow-hidden border-b-4 md:border-8 border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform shrink-0" onClick={handleFocus}>
+          {/* CRITICAL FIX: Added max-h-[55vh]. This caps the height, forcing the width to shrink to maintain square ratio. */}
+          <div className="relative w-full md:w-auto aspect-square max-h-[55vh] md:max-h-[60vh] bg-black md:rounded-xl overflow-hidden border-b-4 md:border-8 border-[#151515] shadow-inner group cursor-crosshair active:scale-[0.99] transition-transform shrink-0 mx-auto" onClick={handleFocus}>
             {error ? <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-3 text-center p-4"><AlertCircle size={32} className="text-red-500" /><p className="text-xs">{error}</p></div> : 
               <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
                  <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`} 
@@ -800,10 +802,10 @@ const RetroCamera = ({ eventId = null }) => {
           </div>
 
           {/* Controls Area */}
-          <div className="flex-1 bg-[#1a1a1a] md:rounded-b-[3rem] p-4 pb-8 md:p-8 md:pt-0 shadow-inner flex flex-col justify-between md:gap-4 overflow-hidden">
+          <div className="flex-1 bg-[#1a1a1a] md:rounded-b-[3rem] p-4 pb-8 md:p-8 md:pt-0 shadow-inner flex flex-col justify-end md:justify-between md:gap-4 overflow-hidden min-h-0">
             
-            {/* Top Control Section: Categories & Filters */}
-            <div className="flex flex-col gap-3 shrink-0">
+            {/* Categories & Filters (Hidden on very short screens to save space if needed, or kept tight) */}
+            <div className="flex flex-col gap-2 shrink-0 mb-auto md:mb-0 pt-4 md:pt-0">
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide text-[10px] font-bold shrink-0 min-h-[28px]">
                     {categories.map(cat => (<button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-full border transition-all whitespace-nowrap ${selectedCategory===cat?'bg-neutral-200 text-black border-neutral-200':'bg-transparent text-neutral-500 border-neutral-700 hover:border-neutral-500'}`}>{cat}</button>))}
                 </div>
@@ -925,8 +927,6 @@ const RetroCamera = ({ eventId = null }) => {
                             <div className="absolute top-2 right-2 z-20">
                                 {isSelected ? <CheckCircle2 className="text-blue-500 bg-white rounded-full" size={18} /> : <Circle className="text-white/50 drop-shadow-md" size={18} />}
                             </div>
-                            
-                            {/* FIX 2: Deleted redundant individual download button */}
                         </div>
                         <div className="mt-2 px-1 relative">
                              <div className="relative group/edit">
@@ -940,7 +940,7 @@ const RetroCamera = ({ eventId = null }) => {
         </div>
       </div>
       
-      {/* FIX 3: Batch Action Bar Logic - Hidden ONLY on mobile when viewing camera. Visible on Desktop even if state is camera. */}
+      {/* Batch Action Bar */}
       {selectedPhotos.size > 0 && (
           <div className={`fixed bottom-6 left-0 right-0 mx-auto bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] items-center gap-3 animate-bounce-in border border-white/20 w-[90%] max-w-sm justify-between ${activeTab === 'camera' ? 'hidden md:flex' : 'flex'}`}>
               <span className="font-bold text-sm whitespace-nowrap">{selectedPhotos.size} <span className="hidden sm:inline">Selected</span></span>
